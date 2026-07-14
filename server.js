@@ -32,7 +32,6 @@ app.use(
     },
   })
 );
-
 const allowedOrigins = [
   "http://localhost:5173",
   "https://carrentalchittor.vercel.app",
@@ -40,20 +39,36 @@ const allowedOrigins = [
   "https://www.carrentalchittorgarh.in",
 ];
 
+function isAllowedOrigin(origin) {
+  if (!origin) {
+    return true;
+  }
+
+  if (allowedOrigins.includes(origin)) {
+    return true;
+  }
+
+  // Vercel preview deployment URLs
+  if (
+    origin.startsWith("https://carrentalchittor-") &&
+    origin.endsWith(".vercel.app")
+  ) {
+    return true;
+  }
+
+  return false;
+}
+
 app.use(
   cors({
-    origin: function (origin, callback) {
-      if (!origin) {
+    origin(origin, callback) {
+      if (isAllowedOrigin(origin)) {
         return callback(null, true);
       }
 
-      if (allowedOrigins.includes(origin)) {
-        return callback(null, true);
-      }
+      console.error("CORS blocked origin:", origin);
 
-      return callback(
-        new Error(`CORS blocked: ${origin}`)
-      );
+      return callback(null, false);
     },
 
     credentials: true,

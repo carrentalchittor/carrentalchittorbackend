@@ -11,10 +11,36 @@ const allowedOrigins = [
   "https://www.carrentalchittorgarh.in",
 ].map(normalizeOrigin);
 
-module.exports = function trustedOrigin(req, res, next) {
-  const safeMethods = ["GET", "HEAD", "OPTIONS"];
+function isAllowedOrigin(origin) {
+  if (!origin) {
+    return true;
+  }
 
-  // Read-only requests ko allow karo
+  if (allowedOrigins.includes(origin)) {
+    return true;
+  }
+
+  if (
+    origin.startsWith("https://carrentalchittor-") &&
+    origin.endsWith(".vercel.app")
+  ) {
+    return true;
+  }
+
+  return false;
+}
+
+module.exports = function trustedOrigin(
+  req,
+  res,
+  next
+) {
+  const safeMethods = [
+    "GET",
+    "HEAD",
+    "OPTIONS",
+  ];
+
   if (safeMethods.includes(req.method)) {
     return next();
   }
@@ -23,13 +49,8 @@ module.exports = function trustedOrigin(req, res, next) {
     req.get("origin")
   );
 
-  // Postman/server-to-server request
-  if (!requestOrigin) {
-    return next();
-  }
-
-  if (!allowedOrigins.includes(requestOrigin)) {
-    console.log(
+  if (!isAllowedOrigin(requestOrigin)) {
+    console.error(
       "Trusted origin blocked:",
       requestOrigin
     );
