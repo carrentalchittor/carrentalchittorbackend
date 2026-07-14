@@ -32,62 +32,69 @@ app.use(
     },
   })
 );
-const allowedOrigins = [
-  "http://localhost:5173",
+const productionOrigins = [
   "https://carrentalchittor.vercel.app",
   "https://carrentalchittorgarh.in",
   "https://www.carrentalchittorgarh.in",
 ];
 
 function isAllowedOrigin(origin) {
-  if (!origin) {
+  if (!origin) return true;
+
+  if (origin === "http://localhost:5173") {
     return true;
   }
 
-  if (allowedOrigins.includes(origin)) {
+  if (productionOrigins.includes(origin)) {
     return true;
   }
 
-  // Vercel preview deployment URLs
-  if (
-    origin.startsWith("https://carrentalchittor-") &&
-    origin.endsWith(".vercel.app")
-  ) {
-    return true;
-  }
+  // Vercel ke project preview deployments
+  try {
+    const url = new URL(origin);
 
-  return false;
+    return (
+      url.protocol === "https:" &&
+      url.hostname.endsWith(".vercel.app") &&
+      url.hostname.startsWith("carrentalchittor-")
+    );
+  } catch {
+    return false;
+  }
 }
 
-app.use(
-  cors({
-    origin(origin, callback) {
-      if (isAllowedOrigin(origin)) {
-        return callback(null, true);
-      }
+const corsOptions = {
+  origin(origin, callback) {
+    const allowed = isAllowedOrigin(origin);
 
-      console.error("CORS blocked origin:", origin);
+    console.log("Request origin:", origin);
+    console.log("Origin allowed:", allowed);
 
-      return callback(null, false);
-    },
+    if (allowed) {
+      return callback(null, true);
+    }
 
-    credentials: true,
+    return callback(
+      new Error(`Origin not allowed: ${origin}`)
+    );
+  },
 
-    methods: [
-      "GET",
-      "POST",
-      "PUT",
-      "PATCH",
-      "DELETE",
-      "OPTIONS",
-    ],
+  credentials: true,
 
-    allowedHeaders: [
-      "Content-Type",
-      "Authorization",
-    ],
-  })
-);
+  methods: [
+    "GET",
+    "POST",
+    "PUT",
+    "PATCH",
+    "DELETE",
+    "OPTIONS",
+  ],
+
+  allowedHeaders: [
+    "Content-Type",
+    "Authorization",
+  ],
+};
 
 app.use(
   rateLimit({
@@ -118,6 +125,9 @@ app.get("/api/health", (req, res) => {
   });
 });
 
+
+app.use(cors(corsOptions));
+app.options(/.*/, cors(corsOptions));
 app.use(
   "/api/auth",
   require("./routes/authRoutes")

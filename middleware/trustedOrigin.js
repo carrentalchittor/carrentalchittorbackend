@@ -4,55 +4,53 @@ function normalizeOrigin(value = "") {
     .replace(/\/+$/, "");
 }
 
-const allowedOrigins = [
-  "http://localhost:5173",
+const productionOrigins = [
   "https://carrentalchittor.vercel.app",
   "https://carrentalchittorgarh.in",
   "https://www.carrentalchittorgarh.in",
-].map(normalizeOrigin);
+];
 
 function isAllowedOrigin(origin) {
-  if (!origin) {
+  if (!origin) return true;
+
+  if (origin === "http://localhost:5173") {
     return true;
   }
 
-  if (allowedOrigins.includes(origin)) {
+  if (productionOrigins.includes(origin)) {
     return true;
   }
 
-  if (
-    origin.startsWith("https://carrentalchittor-") &&
-    origin.endsWith(".vercel.app")
-  ) {
-    return true;
-  }
+  try {
+    const url = new URL(origin);
 
-  return false;
+    return (
+      url.protocol === "https:" &&
+      url.hostname.endsWith(".vercel.app") &&
+      url.hostname.startsWith("carrentalchittor-")
+    );
+  } catch {
+    return false;
+  }
 }
 
-module.exports = function trustedOrigin(
-  req,
-  res,
-  next
-) {
-  const safeMethods = [
-    "GET",
-    "HEAD",
-    "OPTIONS",
-  ];
-
-  if (safeMethods.includes(req.method)) {
+module.exports = function trustedOrigin(req, res, next) {
+  if (
+    ["GET", "HEAD", "OPTIONS"].includes(
+      req.method
+    )
+  ) {
     return next();
   }
 
-  const requestOrigin = normalizeOrigin(
+  const origin = normalizeOrigin(
     req.get("origin")
   );
 
-  if (!isAllowedOrigin(requestOrigin)) {
+  if (!isAllowedOrigin(origin)) {
     console.error(
       "Trusted origin blocked:",
-      requestOrigin
+      origin
     );
 
     return res.status(403).json({
