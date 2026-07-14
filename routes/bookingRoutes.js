@@ -185,8 +185,7 @@ router.patch(
 
       booking.paymentReference =
         paymentReference;
-      booking.status = "paid";
-
+booking.status = "payment_submitted";
       await booking.save();
 
       res.json(booking);

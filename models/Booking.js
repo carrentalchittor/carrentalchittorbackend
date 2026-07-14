@@ -43,6 +43,7 @@ const bookingSchema = new mongoose.Schema(
       enum: [
         "pending",
         "approved",
+        "payment_submitted",
         "rejected",
         "paid",
         "completed",
@@ -62,7 +63,4 @@ const bookingSchema = new mongoose.Schema(
   }
 );
 
-module.exports = mongoose.model(
-  "Booking",
-  bookingSchema
-);
+module.exports = mongoose.model("Booking", bookingSchema);
