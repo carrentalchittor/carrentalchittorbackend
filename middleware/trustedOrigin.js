@@ -1,16 +1,39 @@
-module.exports = function trustedOrigin(req, res, next) {
-  const safeMethods = ["GET", "HEAD", "OPTIONS"];
+function normalizeOrigin(value = "") {
+  return String(value)
+    .trim()
+    .replace(/\/+$/, "");
+}
+
+module.exports = function trustedOrigin(
+  req,
+  res,
+  next
+) {
+  const safeMethods = [
+    "GET",
+    "HEAD",
+    "OPTIONS",
+  ];
 
   if (safeMethods.includes(req.method)) {
     return next();
   }
 
-  const allowedOrigin =
-    process.env.FRONTEND_URL || "http://localhost:5173";
+  const requestOrigin = normalizeOrigin(
+    req.get("origin")
+  );
 
-  const origin = req.get("origin");
+  const allowedOrigins = [
+    "http://localhost:5173",
+    normalizeOrigin(
+      process.env.FRONTEND_URL
+    ),
+  ].filter(Boolean);
 
-  if (!origin || origin !== allowedOrigin) {
+  if (
+    !requestOrigin ||
+    !allowedOrigins.includes(requestOrigin)
+  ) {
     return res.status(403).json({
       message: "Request origin is not allowed",
     });

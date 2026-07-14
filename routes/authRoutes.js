@@ -23,17 +23,21 @@ function cleanText(value) {
 }
 
 function setAuthCookie(res, token) {
-  const production =
-    process.env.NODE_ENV === "production";
-
   res.cookie("authToken", token, {
     httpOnly: true,
-    secure: production,
-    sameSite: production ? "none" : "lax",
+    secure: process.env.NODE_ENV === "production",
+    sameSite:
+      process.env.NODE_ENV === "production"
+        ? "none"
+        : "lax",
     maxAge: 7 * 24 * 60 * 60 * 1000,
     path: "/",
   });
 }
+
+/* =========================
+   REGISTER
+========================= */
 
 router.post(
   "/register",
@@ -55,7 +59,8 @@ router.post(
 
       if (!/^[6-9]\d{9}$/.test(phone)) {
         return res.status(400).json({
-          message: "Enter a valid 10 digit phone number",
+          message:
+            "Enter a valid 10 digit phone number",
         });
       }
 
@@ -72,7 +77,8 @@ router.post(
 
       if (existingUser) {
         return res.status(400).json({
-          message: "Phone number already registered",
+          message:
+            "Phone number already registered",
         });
       }
 
@@ -81,7 +87,7 @@ router.post(
         12
       );
 
-      await User.create({
+      const user = await User.create({
         name,
         phone,
         city,
@@ -90,12 +96,23 @@ router.post(
 
       res.status(201).json({
         message: "Registration successful",
+        user: {
+          id: user._id,
+          name: user.name,
+          phone: user.phone,
+          city: user.city,
+          role: user.role,
+        },
       });
     } catch (error) {
       next(error);
     }
   }
 );
+
+/* =========================
+   LOGIN
+========================= */
 
 router.post(
   "/login",
@@ -142,6 +159,7 @@ router.post(
       setAuthCookie(res, token);
 
       res.json({
+        token,
         user: {
           id: user._id,
           name: user.name,
@@ -155,6 +173,10 @@ router.post(
     }
   }
 );
+
+/* =========================
+   LOGOUT
+========================= */
 
 router.post("/logout", (req, res) => {
   res.clearCookie("authToken", {
@@ -172,31 +194,43 @@ router.post("/logout", (req, res) => {
   });
 });
 
-router.get("/me", auth, async (req, res, next) => {
-  try {
-    const user = await User.findById(
-      req.user.id
-    );
+/* =========================
+   CURRENT USER
+========================= */
 
-    if (!user) {
-      return res.status(404).json({
-        message: "User not found",
+router.get(
+  "/me",
+  auth,
+  async (req, res, next) => {
+    try {
+      const user = await User.findById(
+        req.user.id
+      );
+
+      if (!user) {
+        return res.status(404).json({
+          message: "User not found",
+        });
+      }
+
+      res.json({
+        user: {
+          id: user._id,
+          name: user.name,
+          phone: user.phone,
+          city: user.city,
+          role: user.role,
+        },
       });
+    } catch (error) {
+      next(error);
     }
-
-    res.json({
-      user: {
-        id: user._id,
-        name: user.name,
-        phone: user.phone,
-        city: user.city,
-        role: user.role,
-      },
-    });
-  } catch (error) {
-    next(error);
   }
-});
+);
+
+/* =========================
+   ADMIN USERS LIST
+========================= */
 
 router.get(
   "/users",
