@@ -4,17 +4,17 @@ function normalizeOrigin(value = "") {
     .replace(/\/+$/, "");
 }
 
-module.exports = function trustedOrigin(
-  req,
-  res,
-  next
-) {
-  const safeMethods = [
-    "GET",
-    "HEAD",
-    "OPTIONS",
-  ];
+const allowedOrigins = [
+  "http://localhost:5173",
+  "https://carrentalchittor.vercel.app",
+  "https://carrentalchittorgarh.in",
+  "https://www.carrentalchittorgarh.in",
+].map(normalizeOrigin);
 
+module.exports = function trustedOrigin(req, res, next) {
+  const safeMethods = ["GET", "HEAD", "OPTIONS"];
+
+  // Read-only requests ko allow karo
   if (safeMethods.includes(req.method)) {
     return next();
   }
@@ -23,17 +23,17 @@ module.exports = function trustedOrigin(
     req.get("origin")
   );
 
-  const allowedOrigins = [
-    "http://localhost:5173",
-    normalizeOrigin(
-      process.env.FRONTEND_URL
-    ),
-  ].filter(Boolean);
+  // Postman/server-to-server request
+  if (!requestOrigin) {
+    return next();
+  }
 
-  if (
-    !requestOrigin ||
-    !allowedOrigins.includes(requestOrigin)
-  ) {
+  if (!allowedOrigins.includes(requestOrigin)) {
+    console.log(
+      "Trusted origin blocked:",
+      requestOrigin
+    );
+
     return res.status(403).json({
       message: "Request origin is not allowed",
     });
