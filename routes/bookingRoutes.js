@@ -106,13 +106,14 @@ router.patch(
   admin,
   async (req, res, next) => {
     try {
-      const allowedStatuses = [
-        "pending",
-        "approved",
-        "rejected",
-        "paid",
-        "completed",
-      ];
+    const allowedStatuses = [
+  "pending",
+  "approved",
+  "payment_submitted",
+  "rejected",
+  "paid",
+  "completed",
+];
 
       if (
         !allowedStatuses.includes(
