@@ -18,6 +18,16 @@ const userSchema = new mongoose.Schema(
       match: /^[6-9]\d{9}$/,
     },
 
+    email: {
+      type: String,
+      required: true,
+      unique: true,
+      lowercase: true,
+      trim: true,
+      maxlength: 120,
+      match: /^[^\s@]+@[^\s@]+\.[^\s@]+$/,
+    },
+
     city: {
       type: String,
       required: true,
@@ -36,6 +46,16 @@ const userSchema = new mongoose.Schema(
       type: String,
       enum: ["user", "admin"],
       default: "user",
+    },
+
+    resetOtp: {
+      type: String,
+      select: false,
+    },
+
+    resetOtpExpires: {
+      type: Date,
+      select: false,
     },
   },
   {
