@@ -20,6 +20,7 @@ const carSchema = new mongoose.Schema(
       type: String,
       enum: ["car", "bike", "scooty"],
       default: "car",
+      index: true,
     },
 
     type: {
@@ -84,4 +85,13 @@ const carSchema = new mongoose.Schema(
   }
 );
 
-module.exports = mongoose.model("Car", carSchema);
+// Available vehicles को latest-first निकालने के लिए
+carSchema.index({
+  available: 1,
+  createdAt: -1,
+});
+
+module.exports = mongoose.model(
+  "Car",
+  carSchema
+);
